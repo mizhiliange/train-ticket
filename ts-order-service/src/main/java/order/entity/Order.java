@@ -62,6 +62,9 @@ public class Order {
   private String to;
 
   private int status;
+  
+  @Column(name = "train_type")
+  private int trainType;
 
   private String price;
 
@@ -75,6 +78,7 @@ public class Order {
     from = "shanghai";
     to = "taiyuan";
     status = OrderStatus.PAID.getCode();
+    this.trainType = 1;
     price = "0.0";
   }
 
