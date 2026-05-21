@@ -67,6 +67,16 @@ public class OrderController {
     return ok(orderService.getSoldTickets(seatRequest, headers));
   }
 
+  @PostMapping(value = "/order/tickets/type/{trainType}")
+  public HttpEntity getTicketListByDateAndTripIdAndType(
+        @RequestBody Seat seatRequest,
+        @PathVariable int trainType,
+        @RequestHeader HttpHeaders headers) {
+    OrderController.LOGGER.info(
+        "[getSoldTicketsByType][Get Sold Ticket][Train Type: {}]", trainType);
+    return ok(orderService.getSoldTicketsByType(seatRequest, trainType, headers));
+  }
+
   @Operation(summary = "Create new order", description = "Create a new train ticket order")
   @ApiResponses(
       value = {
@@ -84,6 +94,16 @@ public class OrderController {
         createOrder.getTo(),
         createOrder.getTravelDate());
     return ok(orderService.create(createOrder, headers));
+  }
+
+  @PostMapping(path = "/order/type/{trainType}")
+  public HttpEntity createNewOrderWithType(
+        @RequestBody Order order,
+        @PathVariable int trainType,
+        @RequestHeader HttpHeaders headers) {
+    OrderController.LOGGER.info(
+        "[createNewOrderWithType][Create Order][trainType: {}]", trainType);
+    return ok(orderService.createWithType(order, trainType, headers));
   }
 
   @Operation(
