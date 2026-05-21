@@ -82,6 +82,23 @@ public class OrderServiceImpl implements OrderService {
   }
 
   @Override
+  public Response getSoldTicketsByType(Seat seat, int trainType, HttpHeaders headers) {
+    ArrayList<Order> list = orderRepository.findByTravelDateAndTrainNumberAndTrainType(
+        seat.getTravelDate(), seat.getTrainNumber(), trainType);
+    if (list != null && !list.isEmpty()) {
+        Set<Ticket> ticketSet = new HashSet<>();
+        for (Order tempOrder : list) {
+            ticketSet.add(new Ticket(tempOrder.getSeatNumber(), tempOrder.getFrom(), tempOrder.getTo()));
+        }
+        LeftTicketInfo leftTicketInfo = new LeftTicketInfo();
+        leftTicketInfo.setSoldTickets(ticketSet);
+        return new Response<>(1, success, leftTicketInfo);
+    } else {
+        return new Response<>(0, "No orders found.", null);
+    }
+  }
+
+  @Override
   public Response findOrderById(String id, HttpHeaders headers) {
     Optional<Order> op = orderRepository.findById(id);
     if (!op.isPresent()) {
@@ -116,6 +133,12 @@ public class OrderServiceImpl implements OrderService {
           order.getPrice());
       return new Response<>(1, success, order);
     }
+  }
+
+  @Override
+  public Response createWithType(Order order, int trainType, HttpHeaders headers) {
+    order.setTrainType(trainType);
+    return create(order, headers);
   }
 
   // Helper method to check for duplicate orders
@@ -195,6 +218,19 @@ public class OrderServiceImpl implements OrderService {
     }
 
     return new Response<>(1, "Get order num", result);
+  }
+
+  @Override
+  public Response queryOrdersByType(OrderInfo qi, String accountId, int trainType, HttpHeaders headers) {
+    Response response = queryOrders(qi, accountId, headers);
+    if (response.getStatus() == 1 && response.getData() != null) {
+        ArrayList<Order> allOrders = (ArrayList<Order>) response.getData();
+        ArrayList<Order> filteredOrders = allOrders.stream()
+            .filter(o -> o.getTrainType() == trainType)
+            .collect(Collectors.toCollection(ArrayList::new));
+        return new Response<>(1, success, filteredOrders);
+    }
+    return response;
   }
 
   // Helper method to find orders with filters
