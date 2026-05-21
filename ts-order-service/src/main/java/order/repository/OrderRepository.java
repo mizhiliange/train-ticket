@@ -23,7 +23,11 @@ public interface OrderRepository extends JpaRepository<Order, String> {
 
   ArrayList<Order> findByAccountId(String accountId);
 
+  ArrayList<Order> findByAccountIdAndTrainType(String accountId, int trainType);
+
   ArrayList<Order> findByTravelDateAndTrainNumber(String travelDate, String trainNumber);
+
+  ArrayList<Order> findByTravelDateAndTrainNumberAndTrainType(String travelDate, String trainNumber, int trainType);
 
   // New method for checking duplicate orders
   ArrayList<Order> findByAccountIdAndTrainNumberAndTravelDate(
