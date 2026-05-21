@@ -16,12 +16,16 @@ public interface OrderService {
   Response findOrderById(String id, HttpHeaders headers);
 
   Response create(Order newOrder, HttpHeaders headers);
+  
+  Response createWithType(Order newOrder, int trainType, HttpHeaders headers);
 
   Response saveChanges(Order order, HttpHeaders headers);
 
   Response cancelOrder(String accountId, String orderId, HttpHeaders headers);
 
   Response queryOrders(OrderInfo qi, String accountId, HttpHeaders headers);
+
+  Response queryOrdersByType(OrderInfo qi, String accountId, int trainType, HttpHeaders headers);
 
   Response queryOrdersForRefresh(OrderInfo qi, String accountId, HttpHeaders headers);
 
@@ -46,6 +50,8 @@ public interface OrderService {
   Response deleteOrder(String orderId, HttpHeaders headers);
 
   Response getSoldTickets(Seat seatRequest, HttpHeaders headers);
+
+  Response getSoldTicketsByType(Seat seatRequest, int trainType, HttpHeaders headers);
 
   Response addNewOrder(Order order, HttpHeaders headers);
 
