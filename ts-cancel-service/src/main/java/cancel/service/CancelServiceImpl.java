@@ -303,10 +303,10 @@ public class CancelServiceImpl implements CancelService {
     }
   }
 
+
   private Response cancelFromOrder(Order order, HttpHeaders headers) {
     CancelServiceImpl.LOGGER.info("[cancelFromOrder][Change Order Status]");
     order.setStatus(OrderStatus.CANCEL.getCode());
-    // add authorization header
     HttpHeaders newHeaders = getAuthorizationHeadersFrom(headers);
     HttpEntity requestEntity = new HttpEntity(order, newHeaders);
     String orderServiceUrl = getServiceUrl("ts-order-service");
@@ -316,9 +316,10 @@ public class CancelServiceImpl implements CancelService {
             HttpMethod.PUT,
             requestEntity,
             Response.class);
-
     return re.getBody();
   }
+
+// 删掉整个 cancelFromOtherOrder 方法
 
   public static HttpHeaders getAuthorizationHeadersFrom(HttpHeaders oldHeaders) {
     HttpHeaders newHeaders = new HttpHeaders();
@@ -326,22 +327,6 @@ public class CancelServiceImpl implements CancelService {
       newHeaders.add(HttpHeaders.AUTHORIZATION, oldHeaders.getFirst(HttpHeaders.AUTHORIZATION));
     }
     return newHeaders;
-  }
-
-  private Response cancelFromOtherOrder(Order order, HttpHeaders headers) {
-    CancelServiceImpl.LOGGER.info("[cancelFromOtherOrder][Change Order Status]");
-    order.setStatus(OrderStatus.CANCEL.getCode());
-    HttpHeaders newHeaders = getAuthorizationHeadersFrom(headers);
-    HttpEntity requestEntity = new HttpEntity(order, newHeaders);
-    String orderOtherServiceUrl = getServiceUrl("ts-order-other-service");
-    ResponseEntity<Response> re =
-        restTemplate.exchange(
-            orderOtherServiceUrl + "/api/v1/orderOtherService/orderOther",
-            HttpMethod.PUT,
-            requestEntity,
-            Response.class);
-
-    return re.getBody();
   }
 
   public boolean drawbackMoney(String money, String userId, HttpHeaders headers) {
@@ -392,18 +377,3 @@ public class CancelServiceImpl implements CancelService {
             new ParameterizedTypeReference<Response<Order>>() {});
     return re.getBody();
   }
-
-  private Response<Order> getOrderByIdFromOrderOther(String orderId, HttpHeaders headers) {
-    CancelServiceImpl.LOGGER.info("[getOrderByIdFromOrderOther][Get Order][orderId: {}]", orderId);
-    HttpHeaders newHeaders = getAuthorizationHeadersFrom(headers);
-    HttpEntity requestEntity = new HttpEntity(newHeaders);
-    String orderOtherServiceUrl = getServiceUrl("ts-order-other-service");
-    ResponseEntity<Response<Order>> re =
-        restTemplate.exchange(
-            orderOtherServiceUrl + "/api/v1/orderOtherService/orderOther/" + orderId,
-            HttpMethod.GET,
-            requestEntity,
-            new ParameterizedTypeReference<Response<Order>>() {});
-    return re.getBody();
-  }
-}
