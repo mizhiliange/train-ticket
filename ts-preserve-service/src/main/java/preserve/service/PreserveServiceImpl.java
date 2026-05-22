@@ -128,6 +128,10 @@ public class PreserveServiceImpl implements PreserveService {
     UUID orderId = UUID.randomUUID();
     order.setId(orderId.toString());
     order.setTrainNumber(oti.getTripId());
+    
+    int trainType = (oti.getTripId().startsWith("G") || oti.getTripId().startsWith("D")) ? 1 : 2;
+    order.setTrainType(trainType);
+    
     order.setAccountId(oti.getAccountId());
 
     String fromStationName = oti.getFrom();
@@ -456,14 +460,15 @@ public class PreserveServiceImpl implements PreserveService {
     return reGetContactsResult.getBody();
   }
 
-  private Response createOrder(Order coi, HttpHeaders httpHeaders) {
+    private Response createOrder(Order coi, HttpHeaders httpHeaders) {
     PreserveServiceImpl.LOGGER.info("[createOrder][Preserve Service][create order]");
 
     HttpEntity requestEntityCreateOrderResult = new HttpEntity(coi, httpHeaders);
     String orderServiceUrl = getServiceUrl("ts-order-service");
+    String url = orderServiceUrl + "/api/v1/orderservice/order/type/" + coi.getTrainType();
     ResponseEntity<Response<Order>> reCreateOrderResult =
         restTemplate.exchange(
-            orderServiceUrl + "/api/v1/orderservice/order",
+            url,
             HttpMethod.POST,
             requestEntityCreateOrderResult,
             new ParameterizedTypeReference<Response<Order>>() {});
