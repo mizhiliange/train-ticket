@@ -40,7 +40,7 @@ public class CancelServiceImpl implements CancelService {
   @Override
   public Response cancelOrder(String orderId, String loginId, HttpHeaders headers) {
 
-    Response<Order> orderResult = getOrderByIdFromOrder(orderId, headers);
+    Response<Order> orderResult = getOrderById(orderId, headers);
     if (orderResult.getStatus() == 1) {
       CancelServiceImpl.LOGGER.info("[cancelOrder][Cancel Order, Order found G|H]");
       Order order = orderResult.getData();
@@ -50,7 +50,7 @@ public class CancelServiceImpl implements CancelService {
 
         // order.setStatus(OrderStatus.CANCEL.getCode());
 
-        Response changeOrderResult = cancelFromOrder(order, headers);
+        Response changeOrderResult = cancelFrom(order, headers);
         // 0 -- not find order   1 - cancel success
         if (changeOrderResult.getStatus() == 1) {
 
@@ -106,45 +106,7 @@ public class CancelServiceImpl implements CancelService {
             orderId);
         return new Response<>(0, orderStatusCancelNotPermitted, null);
       }
-    } else {
-
-      Response<Order> orderOtherResult = getOrderByIdFromOrderOther(orderId, headers);
-      if (orderOtherResult.getStatus() == 1) {
-        if (CancelServiceImpl.LOGGER.isInfoEnabled()) {
-          CancelServiceImpl.LOGGER.info("[cancelOrder][Cancel Order, Order found Z|K|Other]");
-        }
-
-        Order order = orderOtherResult.getData();
-        if (order.getStatus() == OrderStatus.NOTPAID.getCode()
-            || order.getStatus() == OrderStatus.PAID.getCode()
-            || order.getStatus() == OrderStatus.CHANGE.getCode()) {
-
-          if (CancelServiceImpl.LOGGER.isInfoEnabled()) {
-            CancelServiceImpl.LOGGER.info("[cancelOrder][Cancel Order, Order status ok]");
-          }
-
-          //                    order.setStatus(OrderStatus.CANCEL.getCode());
-          Response changeOrderResult = cancelFromOtherOrder(order, headers);
-
-          if (changeOrderResult.getStatus() == 1) {
-            if (CancelServiceImpl.LOGGER.isInfoEnabled()) {
-              CancelServiceImpl.LOGGER.info("[cancelOrder][Cancel Order Success]");
-            }
-            // Draw back money
-            String money = calculateRefund(order);
-            boolean status = drawbackMoney(money, loginId, headers);
-            if (status) {
-              if (CancelServiceImpl.LOGGER.isInfoEnabled()) {
-                CancelServiceImpl.LOGGER.info("[cancelOrder][Draw Back Money Success]");
-              }
-            } else {
-              if (CancelServiceImpl.LOGGER.isErrorEnabled()) {
-                CancelServiceImpl.LOGGER.error(
-                    "[cancelOrder][Draw Back Money Failed][loginId: {}, orderId: {}]",
-                    loginId,
-                    orderId);
-              }
-            }
+    }
             return new Response<>(1, "Success.", null);
           } else {
             if (CancelServiceImpl.LOGGER.isErrorEnabled()) {
