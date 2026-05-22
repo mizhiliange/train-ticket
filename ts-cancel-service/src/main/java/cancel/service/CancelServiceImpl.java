@@ -42,13 +42,11 @@ public class CancelServiceImpl implements CancelService {
 
     Response<Order> orderResult = getOrderById(orderId, headers);
     if (orderResult.getStatus() == 1) {
-      CancelServiceImpl.LOGGER.info("[cancelOrder][Cancel Order, Order found G|H]");
+      CancelServiceImpl.LOGGER.info("[cancelOrder][Cancel Order, Order found]");
       Order order = orderResult.getData();
       if (order.getStatus() == OrderStatus.NOTPAID.getCode()
           || order.getStatus() == OrderStatus.PAID.getCode()
           || order.getStatus() == OrderStatus.CHANGE.getCode()) {
-
-        // order.setStatus(OrderStatus.CANCEL.getCode());
 
         Response changeOrderResult = cancelFrom(order, headers);
         // 0 -- not find order   1 - cancel success
@@ -106,35 +104,12 @@ public class CancelServiceImpl implements CancelService {
             orderId);
         return new Response<>(0, orderStatusCancelNotPermitted, null);
       }
-    }
-            return new Response<>(1, "Success.", null);
-          } else {
-            if (CancelServiceImpl.LOGGER.isErrorEnabled()) {
-              CancelServiceImpl.LOGGER.error(
-                  "[cancelOrder][Cancel Order Failed][orderId: {}, Reason: {}]",
-                  orderId,
-                  changeOrderResult.getMsg());
-            }
-            return new Response<>(0, "Fail.Reason:" + changeOrderResult.getMsg(), null);
-          }
-        } else {
-          if (CancelServiceImpl.LOGGER.isWarnEnabled()) {
-            CancelServiceImpl.LOGGER.warn(
-                "[cancelOrder][Cancel Order, Order Status Not Permitted][loginId: {}, orderId: {}]",
-                loginId,
-                orderId);
-          }
-          return new Response<>(0, orderStatusCancelNotPermitted, null);
-        }
-      } else {
-        if (CancelServiceImpl.LOGGER.isWarnEnabled()) {
-          CancelServiceImpl.LOGGER.warn(
-              "[cancelOrder][Cancel Order, Order Not Found][loginId: {}, orderId: {}]",
-              loginId,
-              orderId);
-        }
-        return new Response<>(0, "Order Not Found.", null);
-      }
+    } else {
+      CancelServiceImpl.LOGGER.warn(
+          "[cancelOrder][Cancel Order, Order Not Found][loginId: {}, orderId: {}]",
+          loginId,
+      orderId);
+      return new Response<>(0, "Order Not Found.", null);
     }
   }
 
@@ -157,7 +132,7 @@ public class CancelServiceImpl implements CancelService {
   @Override
   public Response calculateRefund(String orderId, HttpHeaders headers) {
 
-    Response<Order> orderResult = getOrderByIdFromOrder(orderId, headers);
+    Response<Order> orderResult = getOrderById(orderId, headers);
     if (orderResult.getStatus() == 1) {
       Order order = orderResult.getData();
       if (order.getStatus() == OrderStatus.NOTPAID.getCode()
@@ -165,16 +140,14 @@ public class CancelServiceImpl implements CancelService {
         if (order.getStatus() == OrderStatus.NOTPAID.getCode()) {
           if (CancelServiceImpl.LOGGER.isInfoEnabled()) {
             CancelServiceImpl.LOGGER.info(
-                "[calculateRefund][Cancel Order, Refund Price From Order Service.Not Paid][orderId:"
-                    + " {}]",
+                "[calculateRefund][Cancel Order, Refund Price.Not Paid][orderId: {}]",
                 orderId);
           }
           return new Response<>(1, "Success. Refoud 0", "0");
         } else {
           if (CancelServiceImpl.LOGGER.isInfoEnabled()) {
             CancelServiceImpl.LOGGER.info(
-                "[calculateRefund][Cancel Order, Refund Price From Order Service.Paid][orderId:"
-                    + " {}]",
+                "[calculateRefund][Cancel Order, Refund Price.Paid][orderId: {}]",
                 orderId);
           }
           return new Response<>(1, "Success. ", calculateRefund(order));
@@ -182,50 +155,17 @@ public class CancelServiceImpl implements CancelService {
       } else {
         if (CancelServiceImpl.LOGGER.isInfoEnabled()) {
           CancelServiceImpl.LOGGER.info(
-              "[calculateRefund][Cancel Order Refund Price Order.Cancel Not Permitted][orderId:"
-                  + " {}]",
+              "[calculateRefund][Cancel Order Refund Price.Cancel Not Permitted][orderId: {}]",
               orderId);
         }
         return new Response<>(0, "Order Status Cancel Not Permitted, Refound error", null);
       }
     } else {
-
-      Response<Order> orderOtherResult = getOrderByIdFromOrderOther(orderId, headers);
-      if (orderOtherResult.getStatus() == 1) {
-        Order order = orderOtherResult.getData();
-        if (order.getStatus() == OrderStatus.NOTPAID.getCode()
-            || order.getStatus() == OrderStatus.PAID.getCode()) {
-          if (order.getStatus() == OrderStatus.NOTPAID.getCode()) {
-            if (CancelServiceImpl.LOGGER.isInfoEnabled()) {
-              CancelServiceImpl.LOGGER.info(
-                  "[calculateRefund][Cancel Order, Refund Price From Order Other Service.Not"
-                      + " Paid][orderId: {}]",
-                  orderId);
-            }
-            return new Response<>(1, "Success, Refound 0", "0");
-          } else {
-            if (CancelServiceImpl.LOGGER.isInfoEnabled()) {
-              CancelServiceImpl.LOGGER.info(
-                  "[Cancel Order][Refund Price From Order Other Service.Paid][orderId: {}]",
-                  orderId);
-            }
-            return new Response<>(1, "Success", calculateRefund(order));
-          }
-        } else {
-          if (CancelServiceImpl.LOGGER.isWarnEnabled()) {
-            CancelServiceImpl.LOGGER.warn(
-                "[Cancel Order][Refund Price, Order Other. Cancel Not Permitted][orderId: {}]",
-                orderId);
-          }
-          return new Response<>(0, orderStatusCancelNotPermitted, null);
-        }
-      } else {
-        if (CancelServiceImpl.LOGGER.isErrorEnabled()) {
-          CancelServiceImpl.LOGGER.error(
-              "[Cancel Order][Refund Price][Order not found][orderId: {}]", orderId);
-        }
-        return new Response<>(0, "Order Not Found", null);
+      if (CancelServiceImpl.LOGGER.isErrorEnabled()) {
+        CancelServiceImpl.LOGGER.error(
+            "[calculateRefund][Order not found][orderId: {}]", orderId);
       }
+      return new Response<>(0, "Order Not Found", null);
     }
   }
 
@@ -265,9 +205,8 @@ public class CancelServiceImpl implements CancelService {
     }
   }
 
-
-  private Response cancelFromOrder(Order order, HttpHeaders headers) {
-    CancelServiceImpl.LOGGER.info("[cancelFromOrder][Change Order Status]");
+  private Response cancelFrom(Order order, HttpHeaders headers) {
+    CancelServiceImpl.LOGGER.info("[cancelFrom][Change Order Status]");
     order.setStatus(OrderStatus.CANCEL.getCode());
     HttpHeaders newHeaders = getAuthorizationHeadersFrom(headers);
     HttpEntity requestEntity = new HttpEntity(order, newHeaders);
@@ -280,8 +219,6 @@ public class CancelServiceImpl implements CancelService {
             Response.class);
     return re.getBody();
   }
-
-// 删掉整个 cancelFromOtherOrder 方法
 
   public static HttpHeaders getAuthorizationHeadersFrom(HttpHeaders oldHeaders) {
     HttpHeaders newHeaders = new HttpHeaders();
@@ -326,8 +263,8 @@ public class CancelServiceImpl implements CancelService {
     return re.getBody();
   }
 
-  private Response<Order> getOrderByIdFromOrder(String orderId, HttpHeaders headers) {
-    CancelServiceImpl.LOGGER.info("[getOrderByIdFromOrder][Get Order][orderId: {}]", orderId);
+  private Response<Order> getOrderById(String orderId, HttpHeaders headers) {
+    CancelServiceImpl.LOGGER.info("[getOrderById][Get Order][orderId: {}]", orderId);
     HttpHeaders newHeaders = getAuthorizationHeadersFrom(headers);
     HttpEntity requestEntity = new HttpEntity(newHeaders);
     String orderServiceUrl = getServiceUrl("ts-order-service");
@@ -339,3 +276,4 @@ public class CancelServiceImpl implements CancelService {
             new ParameterizedTypeReference<Response<Order>>() {});
     return re.getBody();
   }
+}
